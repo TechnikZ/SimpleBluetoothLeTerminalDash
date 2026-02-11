@@ -19,6 +19,10 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import de.kai_morich.simple_bluetooth_le_terminal.dashboard.DashboardDataTap;
 
 /**
  * create notification and queue serial data while activity is not in the foreground
@@ -26,8 +30,8 @@ import java.util.ArrayDeque;
  */
 public class SerialService extends Service implements SerialListener {
 
-    class SerialBinder extends Binder {
-        SerialService getService() { return SerialService.this; }
+    public class SerialBinder extends Binder {
+        public SerialService getService() { return SerialService.this; }
     }
 
     private enum QueueType {Connect, ConnectError, Read, IoError}
@@ -49,6 +53,8 @@ public class SerialService extends Service implements SerialListener {
     private final IBinder binder;
     private final ArrayDeque<QueueItem> queue1, queue2;
     private final QueueItem lastRead;
+
+    private final Set<DashboardDataTap> dashboardDataTaps = new CopyOnWriteArraySet<>();
 
     private SerialSocket socket;
     private SerialListener listener;
@@ -100,6 +106,18 @@ public class SerialService extends Service implements SerialListener {
         if(!connected)
             throw new IOException("not connected");
         socket.write(data);
+    }
+
+    public void registerDashboardDataTap(DashboardDataTap tap) {
+        if (tap != null) {
+            dashboardDataTaps.add(tap);
+        }
+    }
+
+    public void unregisterDashboardDataTap(DashboardDataTap tap) {
+        if (tap != null) {
+            dashboardDataTaps.remove(tap);
+        }
     }
 
     public void attach(SerialListener listener) {
@@ -238,6 +256,12 @@ public class SerialService extends Service implements SerialListener {
      * While not consumed (2), add more data (3).
      */
     public void onSerialRead(byte[] data) {
+        if (connected && !dashboardDataTaps.isEmpty()) {
+            String raw = new String(data);
+            for (DashboardDataTap tap : dashboardDataTaps) {
+                tap.onRawSerialText(raw);
+            }
+        }
         if(connected) {
             synchronized (this) {
                 if (listener != null) {

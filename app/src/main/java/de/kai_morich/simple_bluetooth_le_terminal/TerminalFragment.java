@@ -33,6 +33,8 @@ import androidx.fragment.app.Fragment;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
+import de.kai_morich.simple_bluetooth_le_terminal.dashboard.DashboardFragment;
+
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
     private enum Connected { False, Pending, True }
@@ -182,6 +184,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             hexWatcher.enable(hexEnabled);
             sendText.setHint(hexEnabled ? "HEX mode" : "");
             item.setChecked(hexEnabled);
+            return true;
+        } else if (id == R.id.open_dashboard) {
+            getFragmentManager().beginTransaction().replace(R.id.fragment, new DashboardFragment(), "dashboard").addToBackStack(null).commit();
             return true;
         } else if (id == R.id.backgroundNotification) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
