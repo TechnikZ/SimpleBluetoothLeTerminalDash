@@ -20,4 +20,8 @@
         android:title="Notification if App in background"
         android:checkable="true"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/open_dashboard"
+        android:title="Dashboard"
+        app:showAsAction="never" />
 </menu>
